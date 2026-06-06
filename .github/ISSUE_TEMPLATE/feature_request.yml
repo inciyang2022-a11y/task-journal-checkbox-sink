@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an improvement or a new workflow.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the task workflow rather than only the desired button or setting.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Primary platform
+      options:
+        - Desktop
+        - Android
+        - iOS
+        - All platforms
+    validations:
+      required: true

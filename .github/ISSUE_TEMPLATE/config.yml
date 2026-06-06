@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Obsidian help
+    url: https://help.obsidian.md/
+    about: Use this for questions about Obsidian itself rather than this plugin.

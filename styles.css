@@ -1,0 +1,85 @@
+/* Reading view: dim only the task item that owns #partial. */
+.markdown-rendered li:has(> .task-list-item-checkbox ~ .tag[href="#partial"]) {
+	color: var(--checklist-done-color, var(--text-muted));
+	font-weight: var(--font-normal);
+}
+
+.markdown-rendered li:has(> .task-list-item-checkbox ~ .tag[href="#partial"]) > .tag[href="#partial"] {
+	color: var(--tag-color);
+}
+
+.markdown-rendered li:has(> .task-list-item-checkbox ~ .tag[href="#partial"]) li {
+	color: var(--text-normal);
+	font-weight: var(--font-normal);
+}
+
+.task-journal-modal-buttons {
+	display: flex;
+	gap: 8px;
+	justify-content: flex-end;
+	margin-top: 16px;
+}
+
+.task-journal-status-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.task-journal-status-list button {
+	justify-content: flex-start;
+	min-height: 44px;
+	width: 100%;
+}
+
+.task-journal-modal .task-journal-modal-buttons button {
+	min-height: 44px;
+	min-width: 72px;
+}
+
+.task-journal-summary-modal textarea {
+	width: 100%;
+}
+
+.is-mobile .task-journal-modal {
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
+	width: min(92vw, 560px);
+}
+
+.is-mobile .task-journal-modal .modal-content {
+	overscroll-behavior: contain;
+	overflow-y: auto;
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.is-mobile .task-journal-modal-buttons {
+	background: var(--modal-background);
+	bottom: 0;
+	flex-wrap: wrap;
+	padding-bottom: max(8px, env(safe-area-inset-bottom));
+	position: sticky;
+}
+
+.is-mobile .task-journal-modal-buttons button {
+	flex: 1 1 120px;
+}
+
+.is-mobile .task-journal-settings .setting-item {
+	align-items: stretch;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.is-mobile .task-journal-settings .setting-item-control {
+	justify-content: flex-start;
+	width: 100%;
+}
+
+.is-mobile .task-journal-settings .setting-item-control input:not([type="checkbox"]),
+.is-mobile .task-journal-settings .setting-item-control select,
+.is-mobile .task-journal-settings .setting-item-control textarea {
+	max-width: none;
+	width: 100%;
+}
