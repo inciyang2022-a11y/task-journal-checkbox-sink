@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [1.1.1] - 2026-06-10
+
+### Fixed
+
+- Removed prohibited global ESLint directive comments.
+- Updated mixed Chinese/English UI copy to pass Obsidian's sentence-case review rule without suppressions.
+
 ## [1.1.0] - 2026-06-06
 
 ### Added
@@ -27,4 +34,5 @@ All notable changes to this project are documented here.
 - Refuse an undo when any associated file has changed.
 - Roll back multi-file operations after write failures.
 
+[1.1.1]: https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases/tag/1.1.1
 [1.1.0]: https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases/tag/1.1.0

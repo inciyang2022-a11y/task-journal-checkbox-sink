@@ -1,4 +1,3 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
 import {
 	ButtonComponent,
 	Editor,
@@ -252,7 +251,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 			now,
 		);
 		await this.executePlannedChanges('status-record', changes, now);
-		new Notice('任务记录已写入 Daily Note');
+		new Notice('任务记录已写入 daily note');
 	}
 
 	private calculateTaskStatusUpdate(

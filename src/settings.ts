@@ -1,4 +1,3 @@
-/* eslint-disable obsidianmd/ui/sentence-case */
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import TaskJournalCheckboxSinkPlugin from './main';
 import type { ArchiveGroupMode, ScopeMode, ScopeSettingsLike } from './task';
@@ -51,7 +50,7 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('Daily Note 路径格式')
+			.setName('Daily note 路径格式')
 			.setDesc('支持 YYYY、MM、DD 或 {{date}}。默认：YYYY-MM-DD.md')
 			.addText((text) =>
 				text
@@ -68,7 +67,7 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			.setDesc('用于路径格式中的 {{date}}。V1 支持 YYYY、MM、DD。默认：YYYY-MM-DD')
 			.addText((text) =>
 				text
-					.setPlaceholder('YYYY-MM-DD')
+					.setPlaceholder('Yyyy-mm-dd')
 					.setValue(this.plugin.settings.dailyNoteDateFormat)
 					.onChange(async (value) => {
 						this.plugin.settings.dailyNoteDateFormat = value.trim();
@@ -77,7 +76,7 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Daily Note 记录标题')
+			.setName('Daily note 记录标题')
 			.setDesc('记录会追加到这个标题下。默认：## 任务记录')
 			.addText((text) =>
 				text
@@ -143,7 +142,7 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('指定文件路径')
-			.setDesc('例如：Home-Mobile.md。留空时，指定文件模式不会处理任何文件。')
+			.setDesc('例如：home-mobile.md。留空时，指定文件模式不会处理任何文件。')
 			.addText((text) =>
 				text
 					.setPlaceholder('Home-Mobile.md')
@@ -156,7 +155,7 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('指定文件夹路径')
-			.setDesc('例如：00 Home/。留空时，指定文件夹模式不会处理任何文件。')
+			.setDesc('例如：00 home/。留空时，指定文件夹模式不会处理任何文件。')
 			.addText((text) =>
 				text
 					.setPlaceholder('00 Home/')
@@ -172,7 +171,7 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			.setDesc('每行一个文件夹路径。排除规则优先于作用范围。')
 			.addTextArea((text) => {
 				text
-					.setPlaceholder('Templates/\nArchive/')
+					.setPlaceholder('Templates/\narchive/')
 					.setValue(this.plugin.settings.excludedFolderPaths)
 					.onChange(async (value) => {
 						this.plugin.settings.excludedFolderPaths = value;

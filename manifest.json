@@ -1,7 +1,7 @@
 {
 	"id": "task-journal-checkbox-sink",
 	"name": "Task Journal Checkbox Sink",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"minAppVersion": "1.6.6",
 	"description": "Manage centralized task lists with status journals, automatic sinking, archiving, and single-step undo.",
 	"author": "inciyang2022-a11y",
