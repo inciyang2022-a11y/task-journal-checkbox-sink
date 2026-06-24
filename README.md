@@ -183,8 +183,6 @@ npm run check:release
 
 Release assets are `main.js`, `manifest.json`, and `styles.css`. The GitHub release tag must exactly match the version in `manifest.json` and must not start with `v`.
 
-See [PUBLISHING.md](PUBLISHING.md) for the release guide and [CHANGELOG.md](CHANGELOG.md) for version history.
-
 ## License
 
 [MIT](LICENSE)
