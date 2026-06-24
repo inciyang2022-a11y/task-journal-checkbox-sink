@@ -1,14 +1,14 @@
 /* Reading view: dim only the task item that owns #partial. */
-.markdown-rendered li:has(> .task-list-item-checkbox ~ .tag[href="#partial"]) {
+.markdown-rendered li.task-journal-partial-item {
 	color: var(--checklist-done-color, var(--text-muted));
 	font-weight: var(--font-normal);
 }
 
-.markdown-rendered li:has(> .task-list-item-checkbox ~ .tag[href="#partial"]) > .tag[href="#partial"] {
+.markdown-rendered li.task-journal-partial-item > .tag[href="#partial"] {
 	color: var(--tag-color);
 }
 
-.markdown-rendered li:has(> .task-list-item-checkbox ~ .tag[href="#partial"]) li {
+.markdown-rendered li.task-journal-partial-item li {
 	color: var(--text-normal);
 	font-weight: var(--font-normal);
 }

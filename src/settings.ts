@@ -1,10 +1,14 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import TaskJournalCheckboxSinkPlugin from './main';
 import type { ArchiveGroupMode, ScopeMode, ScopeSettingsLike } from './task';
+import type { LanguageSetting } from './i18n';
+import { DEFAULT_SETTINGS } from './default-settings';
+import { getLocalizedDefaultHeadings } from './i18n';
 
 export type ArchiveTargetMode = 'file' | 'heading';
 
 export interface TaskJournalCheckboxSinkSettings extends ScopeSettingsLike {
+	language: LanguageSetting;
 	dailyNotePathFormat: string;
 	dailyNoteDateFormat: string;
 	dailyNoteHeading: string;
@@ -16,21 +20,7 @@ export interface TaskJournalCheckboxSinkSettings extends ScopeSettingsLike {
 	archiveGroupMode: ArchiveGroupMode;
 }
 
-export const DEFAULT_SETTINGS: TaskJournalCheckboxSinkSettings = {
-	dailyNotePathFormat: 'YYYY-MM-DD.md',
-	dailyNoteDateFormat: 'YYYY-MM-DD',
-	dailyNoteHeading: '## 任务记录',
-	autoOrganizeEnabled: false,
-	autoOrganizeDelayMs: 1000,
-	scopeMode: 'specified-file',
-	specifiedFilePath: '',
-	specifiedFolderPath: '',
-	excludedFolderPaths: 'Templates/\nArchive/',
-	archiveTargetMode: 'file',
-	archiveFilePath: 'Archive/Done Tasks.md',
-	archiveHeading: '## 已完成任务归档',
-	archiveGroupMode: 'day',
-};
+export { DEFAULT_SETTINGS } from './default-settings';
 
 export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 	plugin: TaskJournalCheckboxSinkPlugin;
@@ -46,12 +36,32 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 		containerEl.addClass('task-journal-settings');
 
 		new Setting(containerEl)
-			.setName('Daily note 设置')
+			.setName(this.plugin.t('settings.language.heading'))
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('Daily note 路径格式')
-			.setDesc('支持 YYYY、MM、DD 或 {{date}}。默认：YYYY-MM-DD.md')
+			.setName(this.plugin.t('settings.language.name'))
+			.setDesc(this.plugin.t('settings.language.description'))
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption('auto', this.plugin.t('settings.language.auto'))
+					.addOption('zh-CN', this.plugin.t('settings.language.zhCN'))
+					.addOption('en', this.plugin.t('settings.language.en'))
+					.setValue(this.plugin.settings.language)
+					.onChange(async (value) => {
+						await this.plugin.changeLanguage(value as LanguageSetting);
+					}),
+			);
+
+		const localizedHeadings = getLocalizedDefaultHeadings(this.plugin.getEffectiveLanguage());
+
+		new Setting(containerEl)
+			.setName(this.plugin.t('settings.dailyNote.heading'))
+			.setHeading();
+
+		new Setting(containerEl)
+			.setName(this.plugin.t('settings.dailyNote.path.name'))
+			.setDesc(this.plugin.t('settings.dailyNote.path.description'))
 			.addText((text) =>
 				text
 					.setPlaceholder('YYYY-MM-DD.md')
@@ -63,8 +73,8 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('日期格式')
-			.setDesc('用于路径格式中的 {{date}}。V1 支持 YYYY、MM、DD。默认：YYYY-MM-DD')
+			.setName(this.plugin.t('settings.dailyNote.date.name'))
+			.setDesc(this.plugin.t('settings.dailyNote.date.description'))
 			.addText((text) =>
 				text
 					.setPlaceholder('Yyyy-mm-dd')
@@ -76,11 +86,13 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('Daily note 记录标题')
-			.setDesc('记录会追加到这个标题下。默认：## 任务记录')
+			.setName(this.plugin.t('settings.dailyNote.recordHeading.name'))
+			.setDesc(this.plugin.t('settings.dailyNote.recordHeading.description', {
+				heading: localizedHeadings.dailyNoteHeading,
+			}))
 			.addText((text) =>
 				text
-					.setPlaceholder('## 任务记录')
+					.setPlaceholder(localizedHeadings.dailyNoteHeading)
 					.setValue(this.plugin.settings.dailyNoteHeading)
 					.onChange(async (value) => {
 						this.plugin.settings.dailyNoteHeading = value.trim();
@@ -89,12 +101,12 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('自动整理设置')
+			.setName(this.plugin.t('settings.auto.heading'))
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('启用自动整理')
-			.setDesc('默认关闭。开启后会在编辑停止一小段时间后整理当前 Markdown 文件。')
+			.setName(this.plugin.t('settings.auto.enabled.name'))
+			.setDesc(this.plugin.t('settings.auto.enabled.description'))
 			.addToggle((toggle) =>
 				toggle
 					.setValue(this.plugin.settings.autoOrganizeEnabled)
@@ -105,8 +117,8 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('整理延迟时间')
-			.setDesc('编辑停止后等待多少毫秒再整理。默认：1000ms')
+			.setName(this.plugin.t('settings.auto.delay.name'))
+			.setDesc(this.plugin.t('settings.auto.delay.description'))
 			.addText((text) =>
 				text
 					.setPlaceholder('1000')
@@ -121,18 +133,18 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('作用范围设置')
+			.setName(this.plugin.t('settings.scope.heading'))
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('作用范围')
-			.setDesc('默认是指定文件，但路径留空时不会处理任何文件。')
+			.setName(this.plugin.t('settings.scope.mode.name'))
+			.setDesc(this.plugin.t('settings.scope.mode.description'))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption('current-file', '仅当前文件')
-					.addOption('specified-file', '仅指定文件')
-					.addOption('folder', '指定文件夹')
-					.addOption('vault', '全库')
+					.addOption('current-file', this.plugin.t('settings.scope.currentFile'))
+					.addOption('specified-file', this.plugin.t('settings.scope.specifiedFile'))
+					.addOption('folder', this.plugin.t('settings.scope.folder'))
+					.addOption('vault', this.plugin.t('settings.scope.vault'))
 					.setValue(this.plugin.settings.scopeMode)
 					.onChange(async (value) => {
 						this.plugin.settings.scopeMode = value as ScopeMode;
@@ -141,11 +153,11 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('指定文件路径')
-			.setDesc('例如：home-mobile.md。留空时，指定文件模式不会处理任何文件。')
+			.setName(this.plugin.t('settings.scope.file.name'))
+			.setDesc(this.plugin.t('settings.scope.file.description'))
 			.addText((text) =>
 				text
-					.setPlaceholder('Home-Mobile.md')
+					.setPlaceholder('HOME.md')
 					.setValue(this.plugin.settings.specifiedFilePath)
 					.onChange(async (value) => {
 						this.plugin.settings.specifiedFilePath = value.trim();
@@ -154,11 +166,10 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('指定文件夹路径')
-			.setDesc('例如：00 home/。留空时，指定文件夹模式不会处理任何文件。')
+			.setName(this.plugin.t('settings.scope.folderPath.name'))
+			.setDesc(this.plugin.t('settings.scope.folderPath.description'))
 			.addText((text) =>
 				text
-					.setPlaceholder('00 Home/')
 					.setValue(this.plugin.settings.specifiedFolderPath)
 					.onChange(async (value) => {
 						this.plugin.settings.specifiedFolderPath = value.trim();
@@ -167,8 +178,8 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('排除文件夹')
-			.setDesc('每行一个文件夹路径。排除规则优先于作用范围。')
+			.setName(this.plugin.t('settings.scope.excluded.name'))
+			.setDesc(this.plugin.t('settings.scope.excluded.description'))
 			.addTextArea((text) => {
 				text
 					.setPlaceholder('Templates/\narchive/')
@@ -181,16 +192,16 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName('归档设置')
+			.setName(this.plugin.t('settings.archive.heading'))
 			.setHeading();
 
 		new Setting(containerEl)
-			.setName('归档位置')
-			.setDesc('归档命令只处理当前文件；这里决定已完成任务移动到哪里。')
+			.setName(this.plugin.t('settings.archive.location.name'))
+			.setDesc(this.plugin.t('settings.archive.location.description'))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption('file', '指定文件')
-					.addOption('heading', '当前页指定标题')
+					.addOption('file', this.plugin.t('settings.archive.location.file'))
+					.addOption('heading', this.plugin.t('settings.archive.location.heading'))
 					.setValue(this.plugin.settings.archiveTargetMode)
 					.onChange(async (value) => {
 						this.plugin.settings.archiveTargetMode = value as ArchiveTargetMode;
@@ -199,8 +210,8 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('归档文件路径')
-			.setDesc('归档位置为指定文件时使用。默认：Archive/Done Tasks.md')
+			.setName(this.plugin.t('settings.archive.file.name'))
+			.setDesc(this.plugin.t('settings.archive.file.description'))
 			.addText((text) =>
 				text
 					.setPlaceholder('Archive/Done Tasks.md')
@@ -212,11 +223,13 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('归档标题')
-			.setDesc('归档内容会追加到这个标题下。默认：## 已完成任务归档')
+			.setName(this.plugin.t('settings.archive.headingName.name'))
+			.setDesc(this.plugin.t('settings.archive.headingName.description', {
+				heading: localizedHeadings.archiveHeading,
+			}))
 			.addText((text) =>
 				text
-					.setPlaceholder('## 已完成任务归档')
+					.setPlaceholder(localizedHeadings.archiveHeading)
 					.setValue(this.plugin.settings.archiveHeading)
 					.onChange(async (value) => {
 						this.plugin.settings.archiveHeading = value.trim();
@@ -225,14 +238,14 @@ export class TaskJournalCheckboxSinkSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName('归档分组')
-			.setDesc('默认按天分组，也可以改为按周、按月或不分组。')
+			.setName(this.plugin.t('settings.archive.group.name'))
+			.setDesc(this.plugin.t('settings.archive.group.description'))
 			.addDropdown((dropdown) =>
 				dropdown
-					.addOption('day', '按天')
-					.addOption('week', '按周')
-					.addOption('month', '按月')
-					.addOption('none', '不分组')
+					.addOption('day', this.plugin.t('settings.archive.group.day'))
+					.addOption('week', this.plugin.t('settings.archive.group.week'))
+					.addOption('month', this.plugin.t('settings.archive.group.month'))
+					.addOption('none', this.plugin.t('settings.archive.group.none'))
 					.setValue(this.plugin.settings.archiveGroupMode)
 					.onChange(async (value) => {
 						this.plugin.settings.archiveGroupMode = value as ArchiveGroupMode;

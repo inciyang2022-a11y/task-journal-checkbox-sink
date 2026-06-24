@@ -599,6 +599,16 @@ describe('journal entries', () => {
 		);
 	});
 
+	it('formats natural English journal entries', () => {
+		const date = new Date(2026, 5, 5, 14, 35);
+		expect(formatJournalEntry('completed', 'Finish report', 'Sent to the team', date, 'en')).toBe(
+			'- 14:35 Completed “Finish report”: Sent to the team',
+		);
+		expect(formatJournalEntry('partial', 'Draft proposal', '', date, 'en')).toBe(
+			'- 14:35 Partially completed “Draft proposal”:',
+		);
+	});
+
 	it('formats daily note paths with direct tokens and date placeholder', () => {
 		const date = new Date(2026, 5, 5, 14, 35);
 		expect(formatDailyNotePath('00 Journal/Daily/YYYY-MM-DD.md', 'YYYY-MM-DD', date)).toBe(

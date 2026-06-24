@@ -1,5 +1,8 @@
 # 第一次发布插件：一步一步操作
 
+> 本文保留 `1.1.0` 首次发布流程作为历史参考。当前待发布版本为 `1.2.0`；
+> 标签、manifest、package 和 `versions.json` 必须统一为 `1.2.0`。
+
 这份说明针对第一次使用 GitHub 发布 Obsidian 插件的作者。正式版本是 `1.1.0`，Release 标签也必须写成 `1.1.0`，不要写 `v1.1.0`。
 
 ## 你将完成什么
@@ -10,7 +13,6 @@
 4. 创建 `1.1.0` Release。
 5. 用 Release 文件测试安装。
 6. 提交到 Obsidian Community Plugins。
-7. 审核通过后发布推广信息。
 
 ## 第一阶段：发布前检查
 
@@ -148,39 +150,6 @@ First public release.
   - `typescript`
 
 在 **Settings → General → Features** 确认 Issues 已开启。
-
-## 第九阶段：推广文案
-
-### 中文
-
-```text
-我发布了自己的第一个 Obsidian 插件：Task Journal Checkbox Sink。
-
-它适合在一个集中式主页管理任务，可以记录已完成/部分完成状态到 Daily Note，让已完成任务在当前层级自动沉底，并按真实完成日期归档。插件还支持撤销上一次任务操作，并针对 Android 和 iOS 做了优化。
-
-项目与使用说明：
-https://github.com/inciyang2022-a11y/task-journal-checkbox-sink
-
-这是我的第一个插件，欢迎反馈。提交示例时请先删除私人内容。
-```
-
-### English
-
-```text
-I released my first Obsidian plugin: Task Journal Checkbox Sink.
-
-It manages tasks on a centralized page, records completed or partial outcomes in Daily Notes, sinks completed task blocks within their current list, archives them by their actual completion date, and supports single-step undo. It is optimized for desktop, Android, and iOS.
-
-Project and documentation:
-https://github.com/inciyang2022-a11y/task-journal-checkbox-sink
-
-Feedback is welcome. Please remove private information from all example notes.
-```
-
-官方收录后可发布到：
-
-- [Obsidian Forum - Share & showcase](https://forum.obsidian.md/c/share-showcase/9)
-- Obsidian Discord 的 `#updates`（需要 developer 角色）
 
 ## 后续版本编号
 

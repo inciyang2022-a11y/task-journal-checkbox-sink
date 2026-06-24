@@ -1,6 +1,6 @@
 {
 	"name": "task-journal-checkbox-sink",
-	"version": "1.1.1",
+	"version": "1.2.0",
 	"description": "Manage centralized Obsidian task lists with status journals, automatic sinking, archiving, and undo.",
 	"main": "main.js",
 	"type": "module",

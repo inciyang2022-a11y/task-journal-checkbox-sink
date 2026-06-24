@@ -595,9 +595,15 @@ export function formatJournalEntry(
 	taskText: string,
 	summary: string,
 	now: Date,
+	language: 'zh-CN' | 'en' = 'zh-CN',
 ): string {
-	const label = status === 'completed' ? '已完成' : '部分完成';
 	const time = formatDate(now, 'HH:mm');
+	if (language === 'en') {
+		const label = status === 'completed' ? 'Completed' : 'Partially completed';
+		return `- ${time} ${label} “${taskText}”: ${summary.trim()}`.trimEnd();
+	}
+
+	const label = status === 'completed' ? '已完成' : '部分完成';
 	return `- ${time} ${label}「${taskText}」：${summary.trim()}`;
 }
 
