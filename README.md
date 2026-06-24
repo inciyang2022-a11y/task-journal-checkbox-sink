@@ -1,105 +1,43 @@
 # Task Journal Checkbox Sink
 
-[中文](#中文说明) | [English](#english)
+> Keep a centralized Obsidian task page readable: sink completed tasks safely, record outcomes in Daily Notes, archive by completion date, and undo the latest operation.
 
-An Obsidian plugin for managing tasks on a central page, recording task outcomes in Daily Notes, sinking completed tasks, archiving them by completion date, and undoing the latest task operation.
+[English](#english) | [中文](#中文说明) | [Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases) | [Issues](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/issues)
 
+- Full English and Simplified Chinese interface
 - Desktop, Android, and iOS
-- Local and offline
-- No account, network request, telemetry, advertising, or payment
+- Local and offline: no account, network requests, telemetry, advertising, or payment
 - Minimum Obsidian version: `1.6.6`
-
-## 中文说明
-
-### 功能
-
-Task Journal Checkbox Sink 适合把任务集中放在一个页面中管理，例如 `Home-Mobile.md`。
-
-- **记录任务状态**：在光标所在任务行选择“已完成”或“部分完成”，填写可选总结，并写入当天 Daily Note。
-- **已完成任务沉底**：只移动到当前缩进层级的同级任务列表末尾；子任务和附属内容会随任务块整体移动。
-- **部分完成**：保留未勾选状态并添加 `#partial`，任务文字显示为与已完成任务一致的灰度，但不沉底。
-- **手动 checkbox 支持**：直接点击 Obsidian checkbox 时记录完成日期，可按设置自动沉底。
-- **归档已完成任务**：归档到指定文件或当前页面标题，并按真实完成日期进行日、周、月分组。
-- **撤销上一次任务操作**：撤销最近一次状态记录、手动 checkbox 或归档操作，重启 Obsidian 后仍有效。
-- **手机端优化**：支持 Android 和 iOS 的触控、软键盘、窄屏弹窗和设置页面。
-
-### 安装
-
-插件通过 Obsidian 官方审核后：
-
-1. 打开 **设置 → 第三方插件**。
-2. 关闭安全模式（如果尚未关闭）。
-3. 选择 **浏览**，搜索 `Task Journal Checkbox Sink`。
-4. 选择 **安装**，然后选择 **启用**。
-
-审核通过前可手动安装：
-
-1. 从 [GitHub Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases) 下载 `main.js`、`manifest.json` 和 `styles.css`。
-2. 在你的 Vault 中创建：
-   `.obsidian/plugins/task-journal-checkbox-sink/`
-3. 将三个文件放入该文件夹。
-4. 重启 Obsidian，在 **设置 → 第三方插件** 中启用插件。
-
-### 快速开始
-
-1. 打开插件设置，填写 Daily Note 路径和记录标题。
-2. 如果需要自动沉底，开启“启用自动整理”，并设置作用范围。该功能默认关闭。
-3. 把光标放在标准 Markdown 任务行上，例如 `- [ ] 完成报告`。
-4. 从命令面板、Commander 或手机工具栏运行 **记录任务状态**。
-5. 选择状态并填写总结。总结可以留空。
-
-### 命令
-
-| 命令 | 作用 |
-| --- | --- |
-| 记录任务状态 | 更新当前任务、写入 Daily Note，并在已完成时沉底 |
-| 归档已完成任务 | 归档当前活动 Markdown 文件中的已完成任务 |
-| 撤销上一次任务操作 | 撤销最近一次插件任务操作 |
-
-### 默认设置
-
-- Daily Note 路径：`YYYY-MM-DD.md`
-- 日期格式：`YYYY-MM-DD`
-- 记录标题：`## 任务记录`
-- 自动整理：关闭
-- 整理延迟：`1000ms`
-- 作用范围：指定文件（路径默认为空，不会自动修改任何文件）
-- 排除文件夹：`Templates/`、`Archive/`
-- 归档文件：`Archive/Done Tasks.md`
-- 归档标题：`## 已完成任务归档`
-- 归档分组：按天
-
-### 安全规则
-
-- 不处理 fenced code block 或 HTML 注释中的任务。
-- 不跨标题或父任务移动任务。
-- 移动任务时保留完整任务块。
-- 自动整理默认关闭，不扫描全库。
-- 撤销前检查相关文件是否在操作后被再次修改；有冲突时整次撤销会拒绝执行。
-- 完成日期保存在隐藏 Markdown 注释中：
-  `%%task-journal-completed:YYYY-MM-DD%%`
-
-### 隐私声明
-
-插件完全在本地运行，只读写当前 Vault 中完成任务操作所需的 Markdown 文件和插件设置。插件不联网、不收集遥测、不投放广告、不要求账户，也不会访问 Vault 外部文件。
-
-### 反馈问题
-
-请前往 [GitHub Issues](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/issues)。
-
-提交 Markdown 示例前，请删除姓名、日记、项目名称或其他私人内容。最好提供可以复现问题的最小文本。
 
 ## English
 
-### Features
+### What it does
 
-- Record a task as completed or partially completed and append an optional summary to today's Daily Note.
-- Move completed task blocks to the end of their current sibling list without crossing headings or parents.
-- Mark partial tasks with `#partial`, using a muted style without moving them.
-- Track native checkbox clicks and optionally organize completed tasks.
-- Archive completed task blocks by their actual completion date.
-- Undo the latest status, checkbox, or archive operation, including after an Obsidian restart.
-- Use the plugin on desktop, Android, and iOS.
+Task Journal Checkbox Sink is designed for people who keep tasks on a centralized Obsidian page.
+
+- **Safely sink completed tasks:** move a completed task only to the end of its current sibling list, without crossing headings or parent tasks.
+- **Keep task blocks intact:** child tasks and attached content move with their parent task.
+- **Write outcomes to a Daily Note:** record a task as completed or partially completed and add an optional summary.
+- **Track native checkbox changes:** store the real completion date and organize completed tasks automatically.
+- **Archive by completion date:** archive to a file or a heading in the current note, grouped by day, week, month, or not grouped.
+- **Undo the latest operation:** undo the most recent status, checkbox, or archive operation, including after restarting Obsidian.
+- **Use it on mobile:** dialogs, touch handling, the software keyboard, and narrow settings screens are supported on Android and iOS.
+
+### Feature preview
+
+| Task sinking | Daily Note entry | Archive and undo |
+| --- | --- | --- |
+| ![Completed tasks sink within their sibling list while child tasks move with them](docs/assets/01-task-sink.png) | ![Select a task status and summary, then write the result to a Daily Note](docs/assets/02-daily-note.png) | ![Archive by actual completion date and undo the latest task operation](docs/assets/03-archive-undo.png) |
+
+### Bilingual interface
+
+| English settings | Simplified Chinese settings |
+| --- | --- |
+| ![English plugin settings with language selection and auto-organize enabled](docs/assets/04-settings-en.png) | ![Simplified Chinese plugin settings with language selection and auto-organize enabled](docs/assets/05-settings-zh-cn.png) |
+
+| English task-status dialog | Simplified Chinese task-status dialog |
+| --- | --- |
+| ![English Record task status dialog opened from the desktop ribbon](docs/assets/06-ribbon-and-status-en.png) | ![Simplified Chinese task-status dialog opened from the desktop ribbon](docs/assets/07-ribbon-and-status-zh-cn.png) |
 
 ### Install
 
@@ -109,30 +47,129 @@ After the plugin is accepted into the Community Plugins directory:
 2. Select **Browse** and search for `Task Journal Checkbox Sink`.
 3. Select **Install**, then **Enable**.
 
-For manual installation before approval:
+Before directory acceptance, install it manually:
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from [GitHub Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases).
-2. Place them in:
-   `.obsidian/plugins/task-journal-checkbox-sink/`
-3. Restart Obsidian and enable the plugin.
+2. Put the three files directly in `.obsidian/plugins/task-journal-checkbox-sink/`.
+3. Restart Obsidian and enable the plugin under **Community plugins**.
 
 ### Quick start
 
-1. Configure the Daily Note path and heading in the plugin settings.
-2. To enable automatic sinking, turn on auto-organize and select a scope. It is disabled by default.
-3. Put the cursor on a Markdown task such as `- [ ] Finish report`.
-4. Run **记录任务状态** from the command palette, Commander, or a mobile toolbar.
-5. Select a status and enter an optional summary.
+1. Open the plugin settings. The interface follows Obsidian automatically, or you can choose English or Simplified Chinese.
+2. Put the cursor on a Markdown task such as `- [ ] Finish report`.
+3. On desktop, select the `list-checks` icon in the left ribbon. You can also run **Record task status** from the command palette, Commander, or a mobile toolbar.
+4. Choose **Completed** or **Partially completed**, then enter an optional summary.
 
-The current in-app interface is Chinese. English UI localization is planned for a future release.
+Clicking a native Obsidian checkbox also stores its completion date. Auto-organize is enabled for the entire vault on new installations, with `Templates/` and `Archive/` excluded by default. Review these settings before using the plugin in an existing vault.
+
+### Commands
+
+| Command | Purpose |
+| --- | --- |
+| Record task status | Update the current task, write a Daily Note entry, and sink it when completed |
+| Archive completed tasks | Archive completed tasks from the active Markdown file |
+| Undo last task operation | Undo the latest operation recorded by the plugin |
+
+### New-installation defaults
+
+- Language: follow Obsidian
+- Daily Note path: `YYYY-MM-DD.md`
+- Date format: `YYYY-MM-DD`
+- English Daily Note heading: `## Task journal`
+- Auto-organize: enabled
+- Organize delay: `1000ms`
+- Scope: entire vault
+- Excluded folders: `Templates/` and `Archive/`
+- Archive file: `Archive/Done Tasks.md`
+- English archive heading: `## Completed tasks archive`
+- Archive grouping: day
+
+Updating from an earlier release does not overwrite saved headings, scope, or auto-organize choices.
 
 ### Privacy and safety
 
-The plugin runs locally and offline. It only accesses Markdown files required by the requested task operation and its own settings. It does not use network services, telemetry, advertising, accounts, payments, or files outside the vault.
+- The plugin runs locally and does not access files outside the vault.
+- Tasks inside fenced code blocks and HTML comments are ignored.
+- Tasks never move across headings or parent-task boundaries.
+- Undo refuses to overwrite files changed after the recorded operation.
+- Completion dates are stored in hidden Markdown comments:
+  `%%task-journal-completed:YYYY-MM-DD%%`
 
 ### Support
 
-Open a [GitHub issue](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/issues). Remove personal information from all example notes and provide the smallest Markdown sample that reproduces the issue.
+Open a [GitHub issue](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/issues). Remove names, journals, project details, and other private information from example notes, then provide the smallest Markdown sample that reproduces the problem.
+
+## 中文说明
+
+### 它解决什么问题
+
+Task Journal Checkbox Sink（任务日志沉底）适合在一个 Obsidian 页面中集中管理任务。
+
+- **完成项安全沉底**：只移动到当前缩进层级的同级列表末尾，不跨标题或父任务。
+- **保留完整任务块**：子任务和附属内容随父任务一起移动。
+- **写入 Daily Note**：记录“已完成”或“部分完成”，并添加可留空的总结。
+- **支持原生 checkbox**：记录真实完成日期，并按设置自动整理。
+- **按完成日期归档**：归档到指定文件或当前页面标题，可按日、周、月或不分组。
+- **撤销上一次操作**：支持状态记录、checkbox 和归档操作，重启 Obsidian 后仍可撤销。
+- **支持移动端**：适配 Android、iOS 的触控、软键盘、弹窗和窄屏设置页。
+
+### 安装
+
+插件进入 Community Plugins 官方目录后：
+
+1. 打开 **设置 → 第三方插件 → 浏览**。
+2. 搜索 `Task Journal Checkbox Sink`。
+3. 选择 **安装**，然后 **启用**。
+
+正式收录前可以手动安装：
+
+1. 从 [GitHub Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases) 下载 `main.js`、`manifest.json` 和 `styles.css`。
+2. 将三个文件直接放入 `.obsidian/plugins/task-journal-checkbox-sink/`。
+3. 重启 Obsidian，并在第三方插件中启用。
+
+### 30 秒开始使用
+
+1. 打开插件设置。语言默认跟随 Obsidian，也可以固定为简体中文或 English。
+2. 把光标放在标准 Markdown 任务行上，例如 `- [ ] 完成报告`。
+3. 桌面端点击左侧功能区的 `list-checks` 按钮；也可以从命令面板、Commander 或手机工具栏运行 **记录任务状态**。
+4. 选择“已完成”或“部分完成”，填写可选总结。
+
+新安装默认开启自动整理并作用于全库，同时默认排除 `Templates/` 和 `Archive/`。在已有 Vault 中使用前，建议先检查作用范围和排除文件夹。旧版本升级不会覆盖已经保存的开关、范围或标题。
+
+### 命令
+
+| 命令 | 作用 |
+| --- | --- |
+| 记录任务状态 | 更新当前任务、写入 Daily Note，并在已完成时沉底 |
+| 归档已完成任务 | 归档当前活动 Markdown 文件中的已完成任务 |
+| 撤销上一次任务操作 | 撤销最近一次插件任务操作 |
+
+### 新安装默认设置
+
+- 语言：跟随 Obsidian
+- Daily Note 路径：`YYYY-MM-DD.md`
+- 日期格式：`YYYY-MM-DD`
+- 中文记录标题：`## 任务记录`
+- 自动整理：开启
+- 整理延迟：`1000ms`
+- 作用范围：全库
+- 排除文件夹：`Templates/`、`Archive/`
+- 归档文件：`Archive/Done Tasks.md`
+- 中文归档标题：`## 已完成任务归档`
+- 归档分组：按天
+
+### 隐私与安全
+
+- 插件完全本地运行，不访问 Vault 外文件。
+- 不处理 fenced code block 或 HTML 注释中的任务。
+- 不跨标题或父任务移动任务。
+- 相关文件在操作后被修改时，整次撤销会拒绝执行。
+- 完成日期保存在隐藏 Markdown 注释中：
+  `%%task-journal-completed:YYYY-MM-DD%%`
+
+### 反馈问题
+
+请前往 [GitHub Issues](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/issues)。提交 Markdown 示例前，请删除姓名、日记、项目名称或其他私人内容。
 
 ## Development
 
@@ -146,7 +183,7 @@ npm run check:release
 
 Release assets are `main.js`, `manifest.json`, and `styles.css`. The GitHub release tag must exactly match the version in `manifest.json` and must not start with `v`.
 
-See [PUBLISHING.md](PUBLISHING.md) for the beginner-friendly release guide and [CHANGELOG.md](CHANGELOG.md) for version history.
+See [PUBLISHING.md](PUBLISHING.md) for the release guide and [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## License
 

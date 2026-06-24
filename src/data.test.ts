@@ -30,4 +30,21 @@ describe('persisted plugin data migration', () => {
 		expect(parsed.settings).toMatchObject({ dailyNotePathFormat: 'YYYY-MM-DD.md' });
 		expect(parsed.lastUndoRecord).toEqual(undoRecord);
 	});
+
+	it('preserves explicit legacy auto-organize and scope choices', () => {
+		const parsed = parsePersistedPluginData({
+			settings: {
+				autoOrganizeEnabled: false,
+				scopeMode: 'specified-file',
+				specifiedFilePath: 'HOME.md',
+			},
+			lastUndoRecord: null,
+		});
+
+		expect(parsed.settings).toMatchObject({
+			autoOrganizeEnabled: false,
+			scopeMode: 'specified-file',
+			specifiedFilePath: 'HOME.md',
+		});
+	});
 });

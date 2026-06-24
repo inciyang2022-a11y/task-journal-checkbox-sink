@@ -1,5 +1,7 @@
+import * as Obsidian from 'obsidian';
 import {
 	ButtonComponent,
+	Command,
 	Editor,
 	MarkdownFileInfo,
 	MarkdownView,
@@ -16,8 +18,18 @@ import {
 	TaskJournalCheckboxSinkSettingTab,
 	TaskJournalCheckboxSinkSettings,
 } from './settings';
+import { mergeSettingsWithDefaults } from './default-settings';
 import { parsePersistedPluginData, PersistedPluginData } from './data';
+import {
+	LanguageSetting,
+	getLocalizedDefaultHeadings,
+	resolveLanguage,
+	SupportedLanguage,
+	translate,
+	TranslationKey,
+} from './i18n';
 import { hideCompletionDateExtension } from './editor';
+import { updatePartialTaskClasses } from './reading-view';
 import {
 	replaceVaultFileContent,
 	trashVaultFile,
@@ -55,13 +67,12 @@ import {
 
 interface StatusChoice {
 	id: TaskStatus | 'cancel';
-	label: string;
 }
 
 const STATUS_CHOICES: StatusChoice[] = [
-	{ id: 'completed', label: '已完成' },
-	{ id: 'partial', label: '部分完成' },
-	{ id: 'cancel', label: '取消' },
+	{ id: 'completed' },
+	{ id: 'partial' },
+	{ id: 'cancel' },
 ];
 const LEGACY_DEFAULT_DAILY_NOTE_PATH_FORMAT = '00 Journal/Daily/YYYY-MM-DD.md';
 
@@ -74,10 +85,17 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	private editorAutoOrganizePath: string | null = null;
 	private vaultAutoOrganizeTimeouts = new Map<string, number>();
 	private checkboxCoordinator!: ManualCheckboxCoordinator;
+	private effectiveLanguage: SupportedLanguage = 'en';
+	private localizedCommands: Array<{ command: Command; key: TranslationKey }> = [];
+	private ribbonIconEl: HTMLElement | null = null;
+	private settingTab!: TaskJournalCheckboxSinkSettingTab;
 
 	async onload() {
 		await this.loadSettings();
 		this.registerEditorExtension(hideCompletionDateExtension);
+		this.registerMarkdownPostProcessor((element) => {
+			updatePartialTaskClasses(element);
+		});
 		this.checkboxCoordinator = new ManualCheckboxCoordinator({
 			readCurrentContent: async (path) => this.readActiveEditorContent(path),
 			commit: async (attempt, nativeChangedContent) => {
@@ -85,50 +103,73 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 			},
 			onError: (error) => {
 				console.error('Task Journal Checkbox Sink failed to record checkbox operation', error);
-				new Notice('记录 checkbox 操作失败，请打开开发者控制台查看错误');
+				new Notice(this.t('notice.checkboxFailed'));
 			},
 		});
 
-		this.addCommand({
+		const recordTaskStatusCommand = this.addCommand({
 			id: 'record-task-status',
-			name: '记录任务状态',
+			name: this.t('command.recordTaskStatus'),
 			editorCallback: async (editor: Editor) => {
 				try {
 					await this.recordTaskStatus(editor);
 				} catch (error) {
 					console.error('Task Journal Checkbox Sink failed to record task status', error);
-					new Notice('记录任务状态失败，请打开开发者控制台查看错误');
+					new Notice(this.t('notice.recordFailed'));
 				}
 			},
 		});
+		this.localizedCommands.push({
+			command: recordTaskStatusCommand,
+			key: 'command.recordTaskStatus',
+		});
 
-		this.addCommand({
+		const archiveCommand = this.addCommand({
 			id: 'archive-completed-tasks',
-			name: '归档已完成任务',
+			name: this.t('command.archiveCompletedTasks'),
 			callback: async () => {
 				try {
 					await this.archiveCompletedTasks();
 				} catch (error) {
 					console.error('Task Journal Checkbox Sink failed to archive completed tasks', error);
-					new Notice('归档已完成任务失败，请打开开发者控制台查看错误');
+					new Notice(this.t('notice.archiveFailed'));
 				}
 			},
 		});
+		this.localizedCommands.push({
+			command: archiveCommand,
+			key: 'command.archiveCompletedTasks',
+		});
 
-		this.addCommand({
+		const undoCommand = this.addCommand({
 			id: 'undo-last-task-operation',
-			name: '撤销上一次任务操作',
+			name: this.t('command.undoLastTaskOperation'),
 			callback: async () => {
 				try {
 					await this.undoLastTaskOperation();
 				} catch (error) {
 					console.error('Task Journal Checkbox Sink failed to undo task operation', error);
-					new Notice('撤销上一次任务操作失败，请打开开发者控制台查看错误');
+					new Notice(this.t('notice.undoFailed'));
 				}
 			},
 		});
+		this.localizedCommands.push({
+			command: undoCommand,
+			key: 'command.undoLastTaskOperation',
+		});
 
-		this.addSettingTab(new TaskJournalCheckboxSinkSettingTab(this.app, this));
+		if (Platform.isDesktop) {
+			this.ribbonIconEl = this.addRibbonIcon(
+				'list-checks',
+				this.t('ribbon.recordTaskStatus'),
+				() => {
+					void this.recordTaskStatusFromRibbon();
+				},
+			);
+		}
+
+		this.settingTab = new TaskJournalCheckboxSinkSettingTab(this.app, this);
+		this.addSettingTab(this.settingTab);
 
 		this.registerEvent(
 			this.app.workspace.on('editor-change', (editor, info) => {
@@ -185,7 +226,11 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	async loadSettings() {
 		const loadedData = await this.loadData() as unknown;
 		const persistedData = parsePersistedPluginData(loadedData);
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, persistedData.settings);
+		const ownerDocument = this.app.workspace.containerEl.ownerDocument;
+		const appLanguage = detectAppLanguage(ownerDocument);
+		const automaticLanguage = resolveLanguage('auto', appLanguage);
+		this.settings = mergeSettingsWithDefaults(persistedData.settings, automaticLanguage);
+		this.effectiveLanguage = resolveLanguage(this.settings.language, appLanguage);
 		this.lastUndoRecord = persistedData.lastUndoRecord;
 
 		if (this.settings.dailyNotePathFormat === LEGACY_DEFAULT_DAILY_NOTE_PATH_FORMAT) {
@@ -198,6 +243,54 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 		await this.savePluginData();
 	}
 
+	getEffectiveLanguage(): SupportedLanguage {
+		return this.effectiveLanguage;
+	}
+
+	t(
+		key: TranslationKey,
+		values: Record<string, string | number> = {},
+	): string {
+		return translate(this.effectiveLanguage, key, values);
+	}
+
+	async changeLanguage(language: LanguageSetting): Promise<void> {
+		this.settings.language = language;
+		this.effectiveLanguage = resolveLanguage(
+			language,
+			detectAppLanguage(this.app.workspace.containerEl.ownerDocument),
+		);
+		await this.saveSettings();
+		this.refreshLocalizedUi();
+	}
+
+	private refreshLocalizedUi(): void {
+		for (const localizedCommand of this.localizedCommands) {
+			localizedCommand.command.name = this.t(localizedCommand.key);
+		}
+
+		if (this.ribbonIconEl) {
+			this.ribbonIconEl.setAttribute('aria-label', this.t('ribbon.recordTaskStatus'));
+		}
+
+		this.settingTab?.display();
+	}
+
+	private async recordTaskStatusFromRibbon(): Promise<void> {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		if (!view?.file || view.file.extension !== 'md' || view.getMode() === 'preview') {
+			new Notice(this.t('notice.notMarkdownFile'));
+			return;
+		}
+
+		try {
+			await this.recordTaskStatus(view.editor);
+		} catch (error) {
+			console.error('Task Journal Checkbox Sink failed to record task status', error);
+			new Notice(this.t('notice.recordFailed'));
+		}
+	}
+
 	private async savePluginData(): Promise<void> {
 		const data: PersistedPluginData = {
 			settings: this.settings,
@@ -207,7 +300,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	}
 
 	private async recordTaskStatus(editor: Editor): Promise<void> {
-		new Notice('正在记录任务状态');
+		new Notice(this.t('notice.recording'));
 		const cursor = editor.getCursor();
 		const currentLine = editor.getLine(cursor.line);
 		const lines = getEditorLines(editor);
@@ -217,16 +310,16 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 			isLineInFencedCodeBlock(lines, cursor.line) ||
 			isLineInHtmlComment(lines, cursor.line)
 		) {
-			new Notice('当前行不是任务项');
+			new Notice(this.t('notice.notTaskLine'));
 			return;
 		}
 
-		const choice = await new StatusChoiceModal(this.app).choose();
+		const choice = await new StatusChoiceModal(this.app, this.effectiveLanguage).choose();
 		if (!choice || choice.id === 'cancel') {
 			return;
 		}
 
-		const summary = await new SummaryModal(this.app).requestSummary();
+		const summary = await new SummaryModal(this.app, this.effectiveLanguage).requestSummary();
 		if (summary === null) {
 			return;
 		}
@@ -234,7 +327,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 		const now = new Date();
 		const sourceFile = this.app.workspace.getActiveFile();
 		if (!(sourceFile instanceof TFile) || sourceFile.extension !== 'md') {
-			new Notice('当前活动文件不是 Markdown 文件');
+			new Notice(this.t('notice.notMarkdownFile'));
 			return;
 		}
 
@@ -242,7 +335,13 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 		const update = this.calculateTaskStatusUpdate(lines, cursor.line, choice.id, now);
 		const updatedLine = update.updatedLine;
 		const taskText = extractTaskText(updatedLine);
-		const entry = formatJournalEntry(choice.id, taskText, summary, now);
+		const entry = formatJournalEntry(
+			choice.id,
+			taskText,
+			summary,
+			now,
+			this.effectiveLanguage,
+		);
 		const changes = await this.planStatusRecordChanges(
 			sourceFile.path,
 			sourceBefore,
@@ -251,7 +350,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 			now,
 		);
 		await this.executePlannedChanges('status-record', changes, now);
-		new Notice('任务记录已写入 daily note');
+		new Notice(this.t('notice.recorded'));
 	}
 
 	private calculateTaskStatusUpdate(
@@ -289,10 +388,12 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 				now,
 			),
 		);
-		const heading = this.settings.dailyNoteHeading || DEFAULT_SETTINGS.dailyNoteHeading;
+		const heading =
+			this.settings.dailyNoteHeading ||
+			getLocalizedDefaultHeadings(this.effectiveLanguage).dailyNoteHeading;
 		const existing = this.app.vault.getAbstractFileByPath(dailyNotePath);
 		if (existing && !(existing instanceof TFile)) {
-			throw new Error(`Daily Note 路径不是 Markdown 文件：${dailyNotePath}`);
+			throw new Error(this.t('error.dailyNoteNotMarkdown', { path: dailyNotePath }));
 		}
 
 		if (dailyNotePath === sourcePath) {
@@ -318,11 +419,13 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	private async archiveCompletedTasks(): Promise<void> {
 		const activeFile = this.app.workspace.getActiveFile();
 		if (!(activeFile instanceof TFile) || activeFile.extension !== 'md') {
-			new Notice('当前活动文件不是 Markdown 文件');
+			new Notice(this.t('notice.notMarkdownFile'));
 			return;
 		}
 
-		const archiveHeading = this.settings.archiveHeading || DEFAULT_SETTINGS.archiveHeading;
+		const archiveHeading =
+			this.settings.archiveHeading ||
+			getLocalizedDefaultHeadings(this.effectiveLanguage).archiveHeading;
 		const archiveFilePath = normalizePath(
 			this.settings.archiveFilePath || DEFAULT_SETTINGS.archiveFilePath,
 		);
@@ -336,7 +439,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 		);
 
 		if (collection.entries.length === 0) {
-			new Notice('当前文件没有可归档的已完成任务');
+			new Notice(this.t('notice.noArchiveTasks'));
 			return;
 		}
 
@@ -363,7 +466,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 
 		const archiveFile = this.app.vault.getAbstractFileByPath(archiveFilePath);
 		if (archiveFile && !(archiveFile instanceof TFile)) {
-			new Notice(`归档路径不是 Markdown 文件：${archiveFilePath}`);
+			new Notice(this.t('error.archiveNotMarkdown', { path: archiveFilePath }));
 			return;
 		}
 
@@ -422,9 +525,12 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	private showArchiveNotice(archivedCount: number, missingCompletionDateCount: number): void {
 		const fallbackMessage =
 			missingCompletionDateCount > 0
-				? `；其中 ${missingCompletionDateCount} 个旧任务缺少完成日期，已按今天分组`
+				? this.t('notice.archiveMissingDates', { count: missingCompletionDateCount })
 				: '';
-		new Notice(`已归档 ${archivedCount} 个已完成任务${fallbackMessage}`);
+		new Notice(this.t('notice.archiveComplete', {
+			count: archivedCount,
+			fallback: fallbackMessage,
+		}));
 	}
 
 	private scheduleAutoOrganizeEditor(editor: Editor, info: MarkdownFileInfo): void {
@@ -561,7 +667,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 			this.vaultAutoOrganizeTimeouts.delete(file.path);
 			this.autoOrganizeVaultFile(file).catch((error) => {
 				console.error('Task Journal Checkbox Sink failed to auto organize file', error);
-				new Notice('自动整理任务失败，请打开开发者控制台查看错误');
+				new Notice(this.t('notice.autoOrganizeFailed'));
 			});
 		}, this.settings.autoOrganizeDelayMs);
 
@@ -640,34 +746,34 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 
 		const uniquePaths = new Set(effectiveChanges.map((change) => change.path));
 		if (uniquePaths.size !== effectiveChanges.length) {
-			throw new Error('同一次任务操作包含重复文件路径');
+			throw new Error(this.t('error.duplicatePaths'));
 		}
 
 		for (const change of effectiveChanges) {
 			const existing = this.app.vault.getAbstractFileByPath(change.path);
 			if (change.beforeContent === null) {
 				if (existing) {
-					throw new Error(`目标文件已存在，无法安全写入：${change.path}`);
+					throw new Error(this.t('error.targetExists', { path: change.path }));
 				}
 				continue;
 			}
 
 			if (!(existing instanceof TFile)) {
-				throw new Error(`目标 Markdown 文件不存在：${change.path}`);
+				throw new Error(this.t('error.targetMissing', { path: change.path }));
 			}
 
 			const alreadyAppliedContent = alreadyAppliedContents.get(change.path);
 			if (alreadyAppliedContent !== undefined) {
 				const currentContent = await this.readFileContent(existing);
 				if (currentContent !== alreadyAppliedContent) {
-					throw new Error(`文件在 checkbox 操作后又发生变化：${change.path}`);
+					throw new Error(this.t('error.changedAfterCheckbox', { path: change.path }));
 				}
 				continue;
 			}
 
 			const currentContent = await this.readFileContent(existing);
 			if (currentContent !== change.beforeContent) {
-				throw new Error(`文件在操作前已发生变化：${change.path}`);
+				throw new Error(this.t('error.changedBeforeOperation', { path: change.path }));
 			}
 		}
 
@@ -691,7 +797,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	private async undoLastTaskOperation(): Promise<void> {
 		const record = this.lastUndoRecord;
 		if (!record) {
-			new Notice('没有可撤销的任务操作');
+			new Notice(this.t('notice.noUndo'));
 			return;
 		}
 
@@ -732,7 +838,9 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 		}
 
 		if (conflicts.length > 0) {
-			new Notice(`无法撤销，以下文件已发生变化：${conflicts.join('、')}`);
+			new Notice(this.t('notice.undoConflict', {
+				paths: conflicts.join(this.effectiveLanguage === 'zh-CN' ? '、' : ', '),
+			}));
 			return;
 		}
 
@@ -755,7 +863,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 			throw error;
 		}
 
-		new Notice('已撤销上一次任务操作');
+		new Notice(this.t('notice.undoComplete'));
 	}
 
 	private async writePlannedFileChange(change: PlannedFileChange): Promise<void> {
@@ -820,7 +928,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 	private async writeFileContent(path: string, content: string): Promise<void> {
 		const existing = this.app.vault.getAbstractFileByPath(path);
 		if (!(existing instanceof TFile)) {
-			throw new Error(`目标 Markdown 文件不存在：${path}`);
+			throw new Error(this.t('error.targetMissing', { path }));
 		}
 
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -844,7 +952,7 @@ export default class TaskJournalCheckboxSinkPlugin extends Plugin {
 		}
 
 		if (!(existing instanceof TFile)) {
-			throw new Error(`撤销目标不是文件：${path}`);
+			throw new Error(this.t('error.undoTargetNotFile', { path }));
 		}
 
 		this.isInternalVaultWrite = true;
@@ -891,6 +999,10 @@ class StatusChoiceModal extends Modal {
 	private resolver: ((choice: StatusChoice | null) => void) | null = null;
 	private selected = false;
 
+	constructor(app: TaskJournalCheckboxSinkPlugin['app'], private language: SupportedLanguage) {
+		super(app);
+	}
+
 	choose(): Promise<StatusChoice | null> {
 		return new Promise((resolve) => {
 			this.resolver = resolve;
@@ -902,12 +1014,20 @@ class StatusChoiceModal extends Modal {
 		const { contentEl } = this;
 		this.modalEl.addClass('task-journal-modal');
 		contentEl.empty();
-		contentEl.createEl('h2', { text: '记录任务状态' });
+		contentEl.createEl('h2', {
+			text: translate(this.language, 'modal.status.title'),
+		});
 
 		const listEl = contentEl.createDiv({ cls: 'task-journal-status-list' });
 		for (const choice of STATUS_CHOICES) {
+			const labelKey: TranslationKey =
+				choice.id === 'completed'
+					? 'status.completed'
+					: choice.id === 'partial'
+						? 'status.partial'
+						: 'action.cancel';
 			new ButtonComponent(listEl)
-				.setButtonText(choice.label)
+				.setButtonText(translate(this.language, labelKey))
 				.onClick(() => {
 					this.chooseStatus(choice);
 				});
@@ -937,6 +1057,10 @@ class SummaryModal extends Modal {
 	private submitted = false;
 	private focusFrame: number | null = null;
 
+	constructor(app: TaskJournalCheckboxSinkPlugin['app'], private language: SupportedLanguage) {
+		super(app);
+	}
+
 	requestSummary(): Promise<string | null> {
 		return new Promise((resolve) => {
 			this.resolver = resolve;
@@ -949,14 +1073,16 @@ class SummaryModal extends Modal {
 		this.modalEl.addClass('task-journal-modal');
 		this.modalEl.addClass('task-journal-summary-modal');
 		contentEl.empty();
-		contentEl.createEl('h2', { text: '填写任务总结' });
+		contentEl.createEl('h2', {
+			text: translate(this.language, 'modal.summary.title'),
+		});
 
 		new Setting(contentEl)
-			.setName('总结')
-			.setDesc('可以留空。')
+			.setName(translate(this.language, 'modal.summary.name'))
+			.setDesc(translate(this.language, 'modal.summary.description'))
 			.addTextArea((text) => {
 				text
-					.setPlaceholder('今天完成了什么？')
+					.setPlaceholder(translate(this.language, 'modal.summary.placeholder'))
 					.onChange((value) => {
 						this.summary = value;
 				});
@@ -976,13 +1102,13 @@ class SummaryModal extends Modal {
 		const buttonRow = contentEl.createDiv({ cls: 'task-journal-modal-buttons' });
 
 		new ButtonComponent(buttonRow)
-			.setButtonText('取消')
+			.setButtonText(translate(this.language, 'action.cancel'))
 			.onClick(() => {
 				this.close();
 			});
 
 		new ButtonComponent(buttonRow)
-			.setButtonText('确定')
+			.setButtonText(translate(this.language, 'action.confirm'))
 			.setCta()
 			.onClick(() => {
 				this.submitted = true;
@@ -1022,5 +1148,24 @@ function replaceEditorContent(editor: Editor, lines: string[]): void {
 		lines.join('\n'),
 		{ line: 0, ch: 0 },
 		{ line: lastLine, ch: editor.getLine(lastLine).length },
+	);
+}
+
+function detectAppLanguage(ownerDocument: Document): string {
+	try {
+		const languageGetter = (
+			Obsidian as unknown as Record<string, unknown>
+		)['getLanguage'];
+		if (typeof languageGetter === 'function') {
+			return (languageGetter as () => string)();
+		}
+	} catch {
+		// Obsidian versions before getLanguage was introduced use the fallbacks below.
+	}
+
+	return (
+		ownerDocument.documentElement.lang ||
+		ownerDocument.defaultView?.navigator.language ||
+		'en'
 	);
 }
