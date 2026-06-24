@@ -4,6 +4,9 @@
 
 [English](#english) | [中文](#中文说明) | [Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases) | [Issues](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/issues)
 
+[![Install in Obsidian](https://img.shields.io/badge/Install_in_Obsidian-7C3AED?logo=obsidian&logoColor=white)](obsidian://show-plugin?id=task-journal-checkbox-sink)
+
+- Available in the official Obsidian Community Plugins directory
 - Full English and Simplified Chinese interface
 - Desktop, Android, and iOS
 - Local and offline: no account, network requests, telemetry, advertising, or payment
@@ -41,13 +44,15 @@ Task Journal Checkbox Sink is designed for people who keep tasks on a centralize
 
 ### Install
 
-After the plugin is accepted into the Community Plugins directory:
+#### Community Plugins directory (recommended)
+
+[Install Task Journal Checkbox Sink in Obsidian](obsidian://show-plugin?id=task-journal-checkbox-sink)
 
 1. Open **Settings → Community plugins**.
 2. Select **Browse** and search for `Task Journal Checkbox Sink`.
 3. Select **Install**, then **Enable**.
 
-Before directory acceptance, install it manually:
+#### Manual installation
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from [GitHub Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases).
 2. Put the three files directly in `.obsidian/plugins/task-journal-checkbox-sink/`.
@@ -115,13 +120,15 @@ Task Journal Checkbox Sink（任务日志沉底）适合在一个 Obsidian 页�
 
 ### 安装
 
-插件进入 Community Plugins 官方目录后：
+#### 官方插件目录（推荐）
+
+[在 Obsidian 中一键打开安装页面](obsidian://show-plugin?id=task-journal-checkbox-sink)
 
 1. 打开 **设置 → 第三方插件 → 浏览**。
 2. 搜索 `Task Journal Checkbox Sink`。
 3. 选择 **安装**，然后 **启用**。
 
-正式收录前可以手动安装：
+#### 手动安装
 
 1. 从 [GitHub Releases](https://github.com/inciyang2022-a11y/task-journal-checkbox-sink/releases) 下载 `main.js`、`manifest.json` 和 `styles.css`。
 2. 将三个文件直接放入 `.obsidian/plugins/task-journal-checkbox-sink/`。
